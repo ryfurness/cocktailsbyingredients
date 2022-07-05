@@ -1,21 +1,22 @@
 
-# Enter Ingredients and Get all the Cocktails that you can make with them.
+# Enter Ingredients -> Get all possible Cocktails
 #### (That's It)
 
+<img src="./cocktailapp-smaller.gif" width="300" />
 
-![screenshot](./cocktailapp.gif)
+
 
 
 ### Credits:
 
-	Cocktail DB:
-		- [The Cocktail DB API](https://www.thecocktaildb.com/api.php)
+####	Cocktail DB:
+- <a href="https://www.thecocktaildb.com/api.php" target="_blank">The Cocktail DB API</a>
 	
-	Images:
-		- [Unsplash](unsplash.com)
+####	Images:
+- <a href="http://unsplash.com" target="_blank">Unsplash</a>
 
-	Icons:
-		- [Font Awesome](fontawesome.io)
+####	Icons:
+- <a href="http://fontawesome.io" target="_blank">Font Awesome</a>
 
-	Template and Other:
-		- [AJ at aj@lkn.io | html5up.net](Eventually Template)
+####	Template and Other:
+- <a href="http://html5up.net" target="_blank">AJ at HTML5Up | Eventually Template</a>
