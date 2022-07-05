@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<!--
+	Eventually by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Cocktail Findr</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel = "icon" type="image/x-icon" href = "https://cdn-icons.flaticon.com/png/512/3086/premium/3086535.png?token=exp=1654631643~hmac=8db6211009a898283ae61b851c04e4a5">
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<h1>Cocktail Findr 🍸</h1>
+				<p>A simple cocktail search engine<br />
+				based on what ingredients you already have. </p>
+			</header>
+
+		<!-- Search Form -->
+			<form id="search-form" method="post" action="#">
+				<input type="text" name="" value="" id="search" placeholder="Ingredients (e.g. 'dark rum, lime' or 'dark rum, orange')" />
+				<input id ="searchBtn" type="submit" value="Get Cocktail" />
+				<h3 id="searchError"></h3>
+			</form>
+
+		<!-- Results -->		
+		<section class="result invisible">
+			<div id="resultBtns">
+			<button id="prevBtn" type="button" disabled /><</button>
+			<button id="nextBtn" type="button" disabled /> ></button></div>
+			<h2>Name</h2>
+			<img class="img-drink" src="" alt="">
+			<h3 class="needs">Needs:</h3>
+			<p class="all-ingredients"></p>
+			<h3>Instructions:</h3>
+			<p class="instruct"></p>
+		</section>
+
+		<!-- Possible Ingredients -->
+		<section class="invisible" id="ingredients">
+			<br>
+			<p>________________________</p>
+			<h4 class="ideasTitle">Some Ingredient Ideas:</h4>
+			<p id="full-list"></p>
+			<input id="foundCocktails" type="hidden" value="">
+			<input id="currCocktail" type="hidden" value="">
+		</section>
+		<!-- Footer -->
+			<footer id="footer">
+				
+				
+				<!-- <ul class="icons"> -->
+					<!-- <li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li> -->
+					<!-- <li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li> -->
+					<!-- <li><a href="#" class="icon brands fa-github"><span class="label">GitHub</span></a></li> -->
+					<!-- <li><a href="#" class="icon fa-envelope"><span class="label">Email</span></a></li> -->
+				<!-- </ul> -->
+				<ul class="copyright">
+					<li>&copy; <span>CocktailFindr. Proudly Built in Trinidad and Tobago  <img class="tt-flag" src="https://flagsworld.org/img/cflags/Trinidad-tobago-flag.png" alt ="Trinidad Tobago Flag"></span></li>
+				</ul>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
