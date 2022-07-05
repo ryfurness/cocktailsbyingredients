@@ -1,10 +1,9 @@
 
-# Enter Ingredients and Get all the Cocktail that you can make with them.
-## That's It
-
-//i.imgur.com/qzI5vwgh.jpg
+# Enter Ingredients and Get all the Cocktails that you can make with them.
+#### (That's It)
 
 
+![screenshot](./cocktailapp.gif)
 
 
 ### Credits:
