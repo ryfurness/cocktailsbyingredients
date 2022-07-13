@@ -247,7 +247,7 @@ async function drinksSetup(){
 		document.querySelector("#ingredients").classList.remove("invisible");
 		for (let i=0;i<data.drinks.length;i++) sortedDrinks.push(data.drinks[i].strIngredient1);
 		sortedDrinks.sort();
-		sortedDrinks.forEach(drnk=> document.querySelector("#full-list").innerText+= " "+drnk+ ", ");
+		sortedDrinks.forEach(drnk=> document.querySelector("#full-list").innerText+= " " + drnk+ ", ");
 	})
 }
 
@@ -259,28 +259,66 @@ async function getCocktails(){
 	document.querySelector("#foundCocktails").value = "";
 	document.querySelector("#searchError").innerText = ""
 	//document.querySelector(".ideasTitle").innerText = "";
-	let ingredients = document.querySelector("#search").value;
+	let dirtyIngre = document.querySelector("#search").value;
 	//if no commas or quotes, use spaces to split search text
-	if (ingredients.search(/,|"|'/)!=-1) ingredients = ingredients.split(/ ,|, |"|'|,/);	
-	else ingredients = ingredients.split(/ /);
-	ingredients = ingredients.filter(ingre=> ingre.length>0);
-  ingredients = ingredients.map(ingre=> ingre.trim());
+	if (dirtyIngre.search(/,|"|'/)!=-1) dirtyIngre = dirtyIngre.split(/ ,|, |"|'|,/);	
+	else dirtyIngre = dirtyIngre.split(/ /);
+	dirtyIngre = dirtyIngre.filter(ingre=> ingre.length>0);
+	dirtyIngre = dirtyIngre.map(ingre=> ingre.trim());
 	//Sometimes an empty item appears	
-	console.log(ingredients);
-	
+	console.log(dirtyIngre);
+
+	//Now cleanup Ingredient - match to actual list from Server
+	let ingreList = document.querySelector("#full-list").innerText.split(/, /)
+	let ingredients = []
+	dirtyIngre.forEach(ingre=> {
+		ingredients.push([])
+		ingreList.forEach(listItem=> {
+			if (listItem.toLowerCase().includes(ingre.toLowerCase())) ingredients[ingredients.length-1].push(listItem)
+		})
+	})
+	//remove duplicates
+	ingredients.forEach(i=> [...new Set(i)])
+	console.log("INGRE",ingredients)
+	let added = false;
+
 	if (ingredients.length>0){
-		for (let i=0;i<ingredients.length;i++) {
-			let cocktailURL = "https://www.thecocktaildb.com/api/json/v1/1/filter.php?i="+ingredients[i];
-			let res = await fetch(cocktailURL)//for this ingredient
-			.then(response => response.json())
-			.then(data => {
-				console.log(data);
-				cocktails.push(data);
-			})
-			.catch(err=>{
-				console.log(`Error: ${err}`)
-				document.querySelector("#searchError").innerText += `Ingredient: "${ingredients[i]}" not found. Skipping it... ` ;
-			});	
+		console.log("Ingr Length:",ingredients.length)
+		for await (ingGroup of ingredients) {
+			for (let j=0;j<ingGroup.length;j++) {
+				let cocktailURL = "https://www.thecocktaildb.com/api/json/v1/1/filter.php?i="+ingGroup[j];
+				console.log(`ingGroup: ${ingGroup}, j: ${j}`)
+				console.log(ingGroup[j])
+				console.log("URL:",cocktailURL, ' \n')
+				let res = fetch(cocktailURL)//for this ingredient
+				.then(response => response.json())
+				.then(data => {
+					console.log(`NUM ${j}: Not Added:`,!added, cocktailURL)
+					if (!added) { //this is a new set of ingredients
+						console.log("NEW b4",JSON.stringify(cocktails))
+						console.log("Data:",JSON.stringify(data))
+						cocktails.push(data);
+						console.log("NEW Af:",JSON.stringify(cocktails), ' \n')
+						added = true;
+						console.log("NEW JUST ADDED- Not Added:",!added, cocktailURL, ' \n')
+					}
+					else {//this is a continuation of the ingredients list;
+						console.log("EXISTING b4:",JSON.stringify(cocktails[cocktails.length-1].drinks))
+						console.log("Data:",JSON.stringify(data))
+						cocktails[cocktails.length-1].drinks = cocktails[cocktails.length-1].drinks.concat(data.drinks)
+						console.log("EXISTING af:",JSON.stringify(cocktails[cocktails.length-1].drinks, ' \n'))
+					}
+					console.log(`Reset Test ${j}: ingr: ${ingGroup.length}`)
+					if (j == ingGroup.length-1) {
+						added = false
+						console.log("RESET Not Added:",!added, ' \n')
+					}
+				})
+				.catch(err=>{
+					console.log(`ERROR: ${err}`, ' \n')
+					document.querySelector("#searchError").innerText += `Ingredient: "${ingGroup[j]}" not found. Skipping it... ` ;
+				});	
+			}
 		}
 		if (cocktails.length>0) {
 			if (cocktails.length>1) {
