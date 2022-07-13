@@ -256,6 +256,7 @@ async function getCocktails(){
 	let cocktailresult = [];
 	let cocktails = [];
 	let cocktail = [];
+	let cocktailIDs = [];
 	document.querySelector("#foundCocktails").value = "";
 	document.querySelector("#searchError").innerText = ""
 	//document.querySelector(".ideasTitle").innerText = "";
@@ -266,7 +267,7 @@ async function getCocktails(){
 	dirtyIngre = dirtyIngre.filter(ingre=> ingre.length>0);
 	dirtyIngre = dirtyIngre.map(ingre=> ingre.trim());
 	//Sometimes an empty item appears	
-	console.log(dirtyIngre);
+	// console.log(dirtyIngre);
 
 	//Now cleanup Ingredient - match to actual list from Server
 	let ingreList = document.querySelector("#full-list").innerText.split(/, /)
@@ -274,84 +275,105 @@ async function getCocktails(){
 	dirtyIngre.forEach(ingre=> {
 		ingredients.push([])
 		ingreList.forEach(listItem=> {
+			//If search item is part of Official Ingredients Item, add official item
 			if (listItem.toLowerCase().includes(ingre.toLowerCase())) ingredients[ingredients.length-1].push(listItem)
 		})
 	})
 	//remove duplicates
 	ingredients.forEach(i=> [...new Set(i)])
-	console.log("INGRE",ingredients)
+	// console.log("INGRE",ingredients)
 	let added = false;
+
+	function getDrinkList(ingGroup,item){
+		let cocktailURL = "https://www.thecocktaildb.com/api/json/v1/1/filter.php?i="+ingredients[ingGroup][item];
+		// console.log(`ingGroup: ${ingGroup}, item: ${item}`)
+		// console.log(ingredients[ingGroup][item])
+		// console.log("URL:",cocktailURL, ' \n')
+		let res = fetch(cocktailURL)//for this ingredient
+		.then(response => response.json())
+		.then(data => {
+			// console.log(`NUM ${item}: Not Added:`,!added, cocktailURL)
+			if (!added) { //this is a new group of ingredients
+				// console.log("NEW b4",JSON.stringify(cocktails))
+				// console.log("Data:",JSON.stringify(data))
+				cocktails.push(data);
+				data.drinks.forEach(d => cocktailIDs[ingGroup].push(d.idDrink))
+				// console.log("NEW Af:",JSON.stringify(cocktails), ' \n')
+				added = true;
+				// console.log("NEW JUST ADDED- Not Added:",!added, cocktailURL, ' \n')
+			}
+			else {//this is a continuation of the ingredients list;
+				// console.log("EXISTING b4:",JSON.stringify(cocktails[cocktails.length-1].drinks))
+				// console.log("Data:",JSON.stringify(data))
+				
+				data.drinks.forEach(d => {
+					if (!cocktailIDs[ingGroup].includes(d.idDrink)){
+						cocktailIDs[ingGroup].push(d.idDrink)
+						cocktails[cocktails.length-1].drinks = cocktails[cocktails.length-1].drinks.concat(d)
+					}
+				})
+				// console.log("EXISTING af:",JSON.stringify(cocktails[cocktails.length-1].drinks, ' \n'))
+			}
+			// console.log(`Reset Test ${item}: ingr: ${ingredients[ingGroup].length}`)
+			if (item < ingredients[ingGroup].length-1) getDrinkList(ingGroup, item+1)
+			else {
+				added = false
+				// console.log("RESET Not Added:",!added, ' \n')
+				if (ingGroup < ingredients.length-1) getDrinkList(ingGroup+1,0)
+				else{
+					// All ingredients searched, now check cocktails
+					console.log(cocktails)
+					if (cocktails.length>0) {
+						console.log("GOOD!!")
+						if (cocktails.length>1) {
+							matchCocktails(cocktails)
+						} else {
+							cocktails[0].drinks.forEach(cocktail=> {
+								document.querySelector("#foundCocktails").value+= cocktail.idDrink+",";
+							})
+						}
+						console.log("Found cocktails:");
+						let matches = document.querySelector("#foundCocktails").value.split(",");
+						matches.pop(); //last one is blank
+						console.log(document.querySelector("#foundCocktails").value);
+						console.log(matches);
+						if (matches.length>0){
+							console.log(`Searching for: [${matches[0]}]`);
+							show(matches[0]);
+							document.querySelector("#currCocktail").value = matches[0];
+							document.querySelector("#prevBtn").disabled = true;
+							if (matches.length>1){
+								document.querySelector("#nextBtn").disabled = false;
+							}
+						} else{
+							setTimeout(()=>document.querySelector("#searchError").innerText = " No Drinks with All those Ingredients Found: Try Changing Spelling or Ingredients.",3000);
+							
+							document.querySelector("#prevBtn").disabled = true;
+							document.querySelector("#nextBtn").disabled = true;
+						}
+					} else{ //No ingredient found
+						document.querySelector("#searchError").innerText = "Please check the ingredient list, not enough found in Database.";
+						document.querySelector("#prevBtn").disabled = true;
+						document.querySelector("#nextBtn").disabled = true;
+					}
+				}
+			}  
+		})
+		.catch(err=>{
+			console.log(`ERROR: ${err}`, ' \n')
+			document.querySelector("#searchError").innerText += `Ingredient: "${ingredients[ingGroup][item]}" not found. Skipping it... ` ;
+		});	
+	}
+	// console.log(cocktailIDs);
+	cocktails.forEach(i=> [...new Set(i)])
+	/* console.log("\n")
+	console.log("FINAL COCKTAILS:",cocktails) */
 
 	if (ingredients.length>0){
 		console.log("Ingr Length:",ingredients.length)
-		for await (ingGroup of ingredients) {
-			for (let j=0;j<ingGroup.length;j++) {
-				let cocktailURL = "https://www.thecocktaildb.com/api/json/v1/1/filter.php?i="+ingGroup[j];
-				console.log(`ingGroup: ${ingGroup}, j: ${j}`)
-				console.log(ingGroup[j])
-				console.log("URL:",cocktailURL, ' \n')
-				let res = fetch(cocktailURL)//for this ingredient
-				.then(response => response.json())
-				.then(data => {
-					console.log(`NUM ${j}: Not Added:`,!added, cocktailURL)
-					if (!added) { //this is a new set of ingredients
-						console.log("NEW b4",JSON.stringify(cocktails))
-						console.log("Data:",JSON.stringify(data))
-						cocktails.push(data);
-						console.log("NEW Af:",JSON.stringify(cocktails), ' \n')
-						added = true;
-						console.log("NEW JUST ADDED- Not Added:",!added, cocktailURL, ' \n')
-					}
-					else {//this is a continuation of the ingredients list;
-						console.log("EXISTING b4:",JSON.stringify(cocktails[cocktails.length-1].drinks))
-						console.log("Data:",JSON.stringify(data))
-						cocktails[cocktails.length-1].drinks = cocktails[cocktails.length-1].drinks.concat(data.drinks)
-						console.log("EXISTING af:",JSON.stringify(cocktails[cocktails.length-1].drinks, ' \n'))
-					}
-					console.log(`Reset Test ${j}: ingr: ${ingGroup.length}`)
-					if (j == ingGroup.length-1) {
-						added = false
-						console.log("RESET Not Added:",!added, ' \n')
-					}
-				})
-				.catch(err=>{
-					console.log(`ERROR: ${err}`, ' \n')
-					document.querySelector("#searchError").innerText += `Ingredient: "${ingGroup[j]}" not found. Skipping it... ` ;
-				});	
-			}
-		}
-		if (cocktails.length>0) {
-			if (cocktails.length>1) {
-				matchCocktails(cocktails)
-			} else {
-				cocktails[0].drinks.forEach(cocktail=> {
-					document.querySelector("#foundCocktails").value+= cocktail.idDrink+",";
-				})
-			}
-			console.log("Found cocktails:");
-			let matches = document.querySelector("#foundCocktails").value.split(",");
-			matches.pop(); //last one is blank
-			console.log(document.querySelector("#foundCocktails").value);
-			console.log(matches);
-			if (matches.length>0){
-				console.log(`Searching for: [${matches[0]}]`);
-				show(matches[0]);
-				document.querySelector("#currCocktail").value = matches[0];
-				document.querySelector("#prevBtn").disabled = true;
-				if (matches.length>1){
-					document.querySelector("#nextBtn").disabled = false;
-				}
-			} else{
-				setTimeout(()=>document.querySelector("#searchError").innerText = " No Drinks with All those Ingredients Found: Try Changing Spelling or Ingredients.",3000);
-				
-				document.querySelector("#prevBtn").disabled = true;
-				document.querySelector("#nextBtn").disabled = true;
-			}
-		} else{ //No ingredient found
-			document.querySelector("#searchError").innerText = "Please check the ingredient list, not enough found in Database.";
-			document.querySelector("#prevBtn").disabled = true;
-			document.querySelector("#nextBtn").disabled = true;
-		}
+		ingredients.forEach(_=> cocktailIDs.push([]))
+		await getDrinkList(0,0);
+		
 	} else{ //No ingredient listed
 		document.querySelector("#searchError").innerText = "Please enter ingredients separated by commas. Place multi-word names in 'quotes'.";
 		document.querySelector("#prevBtn").disabled = true;
