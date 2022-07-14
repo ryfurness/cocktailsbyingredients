@@ -270,7 +270,7 @@ async function getCocktails(){
 	// console.log(dirtyIngre);
 
 	//Now cleanup Ingredient - match to actual list from Server
-	let ingreList = document.querySelector("#full-list").innerText.split(/, /)
+	let ingreList = document.querySelector("#full-list").innerText.split(/,/).map(x=> x.trim())
 	let ingredients = []
 	dirtyIngre.forEach(ingre=> {
 		ingredients.push([])
@@ -278,17 +278,21 @@ async function getCocktails(){
 			//If search item is part of Official Ingredients Item, add official item
 			if (listItem.toLowerCase().includes(ingre.toLowerCase())) ingredients[ingredients.length-1].push(listItem)
 		})
+		if (ingredients[ingredients.length-1].length<1){
+			document.querySelector("#searchError").innerText += `Ingredient: "${ingre}" not found. Skipping it... ` 
+			ingredients.pop();
+		}
 	})
 	//remove duplicates
 	ingredients.forEach(i=> [...new Set(i)])
-	// console.log("INGRE",ingredients)
+	console.log("INGRE",ingredients)
 	let added = false;
 
 	function getDrinkList(ingGroup,item){
 		let cocktailURL = "https://www.thecocktaildb.com/api/json/v1/1/filter.php?i="+ingredients[ingGroup][item];
 		// console.log(`ingGroup: ${ingGroup}, item: ${item}`)
 		// console.log(ingredients[ingGroup][item])
-		// console.log("URL:",cocktailURL, ' \n')
+		console.log("URL:",cocktailURL, ' \n')
 		let res = fetch(cocktailURL)//for this ingredient
 		.then(response => response.json())
 		.then(data => {
@@ -322,9 +326,10 @@ async function getCocktails(){
 				if (ingGroup < ingredients.length-1) getDrinkList(ingGroup+1,0)
 				else{
 					// All ingredients searched, now check cocktails
-					console.log(cocktails)
+					console.log("Cocktails:",cocktails)
+					console.log("Clean Ingredients:",ingredients)
 					if (cocktails.length>0) {
-						console.log("GOOD!!")
+						console.log("Cocktail Search on!")
 						if (cocktails.length>1) {
 							matchCocktails(cocktails)
 						} else {
@@ -425,26 +430,56 @@ async function showPrev(){
 }
 
 function matchCocktails(cocktailArray){
-	//if more than 1 ingredient
-	cocktailArray[0].drinks.forEach(drink=>{
-		if (commonCocktail(1, drink, cocktailArray)){
-			//debugger;
-			document.querySelector("#foundCocktails").value+= drink.idDrink+",";
-		}
+	//if more than 1 ingredient, order cocktails by how many ingredients are matched
+	let n = 0
+	let drinkIdArray = []
+	let orderedDrinks = []
+	drinkIdArray = cocktailArray.map(ing=> ing.drinks.map(dr=> dr.idDrink))
+
+	console.log("ID's before:", drinkIdArray)
+
+	for (let j=0;j<drinkIdArray.length-1;j++){
+		drinkIdArray[j].forEach(drinkId=>{
+			let DRK = {}
+			DRK["drinkId"] = drinkId
+			DRK["count"] = commonCocktail(j, j+1, 1, drinkId, drinkIdArray);
+			orderedDrinks.push(DRK);
+		})
+	}
+	orderedDrinks.sort((a,b)=> b.count-a.count)
+	//console.log("ID's after:", drinkIdArray)
+	//console.log("Cocktail Array X", orderedDrinks)
+	//debugger;
+	if (orderedDrinks[0].count == cocktailArray.length){
+		document.querySelector("#searchError").innerText = "Drinks found. Some don't have all ingredients though."
+	} else document.querySelector("#searchError").innerText = "No drink with all ingredients found. Here are some close Matches."
+	
+	orderedDrinks.forEach(d=> {
+		document.querySelector("#foundCocktails").value+= d.drinkId+",";
 	})
+	
 }
 
-function commonCocktail(n, cocktail, cocktailArray){
+function commonCocktail(originList, currentList, count, drinkId, drinkIdArray){
 	//debugger;
-	if (cocktailArray[n].drinks.find(ct=> ct.idDrink === cocktail.idDrink)){
-		if (n == cocktailArray.length-1){
-			return true; //cocktail is in all ingredient tables
-		} else{ //search next table
-			return commonCocktail(n+1, cocktail, cocktailArray);
+	//drinkIdArray has a list of cocktails for each ingredient entered
+	d = drinkIdArray[currentList].indexOf(drinkId)
+	if (currentList == drinkIdArray.length-1){
+		if (d > -1) { //then drinkId found on currentList, count it then delete it to prevent duplication
+			//drinkIdArray[currentList] = drinkIdArray[currentList].splice(d,1)
+			return 1 + count; //cocktail is in this number of ingredient tables
+		}
+		else {
+			return count;
 		}
 	}else {
-		console.log(`Cocktail not common: ${cocktailArray[n].drinks.idDrink}`);
-		return false;
+		if (d > -1) {//then drinkId found on currentList, count it then delete it to prevent duplication
+			//drinkIdArray[currentList] = drinkIdArray[currentList].splice(d,1)
+			return commonCocktail(originList, currentList+1, count+1, drinkId, drinkIdArray); 
+		}
+		else {
+			return commonCocktail(originList, currentList+1, count, drinkId, drinkIdArray);
+		}
 	}
 }
 
