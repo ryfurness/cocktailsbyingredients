@@ -241,7 +241,7 @@ async function drinksSetup(){
 	let res = await fetch(cocktailURL)//for ingredients
 	.then(response => response.json())
 	.then(data => {
-		console.log(data);
+		// console.log(data);
 		let sortedDrinks = []
 		
 		document.querySelector("#ingredients").classList.remove("invisible");
@@ -285,14 +285,14 @@ async function getCocktails(){
 	})
 	//remove duplicates
 	ingredients.forEach(i=> [...new Set(i)])
-	console.log("INGRE",ingredients)
+	// console.log("INGRE",ingredients)
 	let added = false;
 
 	function getDrinkList(ingGroup,item){
 		let cocktailURL = "https://www.thecocktaildb.com/api/json/v1/1/filter.php?i="+ingredients[ingGroup][item];
 		// console.log(`ingGroup: ${ingGroup}, item: ${item}`)
 		// console.log(ingredients[ingGroup][item])
-		console.log("URL:",cocktailURL, ' \n')
+		// console.log("URL:",cocktailURL, ' \n')
 		let res = fetch(cocktailURL)//for this ingredient
 		.then(response => response.json())
 		.then(data => {
@@ -326,10 +326,10 @@ async function getCocktails(){
 				if (ingGroup < ingredients.length-1) getDrinkList(ingGroup+1,0)
 				else{
 					// All ingredients searched, now check cocktails
-					console.log("Cocktails:",cocktails)
-					console.log("Clean Ingredients:",ingredients)
+					// console.log("Cocktails:",cocktails)
+					// console.log("Clean Ingredients:",ingredients)
 					if (cocktails.length>0) {
-						console.log("Cocktail Search on!")
+						// console.log("Cocktail Search on!")
 						if (cocktails.length>1) {
 							matchCocktails(cocktails)
 						} else {
@@ -337,13 +337,13 @@ async function getCocktails(){
 								document.querySelector("#foundCocktails").value+= cocktail.idDrink+",";
 							})
 						}
-						console.log("Found cocktails:");
+						// console.log("Found cocktails:");
 						let matches = document.querySelector("#foundCocktails").value.split(",");
 						matches.pop(); //last one is blank
-						console.log(document.querySelector("#foundCocktails").value);
-						console.log(matches);
+						// console.log(document.querySelector("#foundCocktails").value);
+						// console.log(matches);
 						if (matches.length>0){
-							console.log(`Searching for: [${matches[0]}]`);
+							// console.log(`Searching for: [${matches[0]}]`);
 							show(matches[0]);
 							document.querySelector("#currCocktail").value = matches[0];
 							document.querySelector("#prevBtn").disabled = true;
@@ -375,7 +375,7 @@ async function getCocktails(){
 	console.log("FINAL COCKTAILS:",cocktails) */
 
 	if (ingredients.length>0){
-		console.log("Ingr Length:",ingredients.length)
+		// console.log("Ingr Length:",ingredients.length)
 		ingredients.forEach(_=> cocktailIDs.push([]))
 		await getDrinkList(0,0);
 		
@@ -390,13 +390,13 @@ async function showNext(){
 	//get all results
 	let matches = document.querySelector("#foundCocktails").value.split(",");
 	matches.pop();//last one is blank
-	console.log(document.querySelector("#foundCocktails").value);
+	// console.log(document.querySelector("#foundCocktails").value);
 	//get currently shown result
 	let curr = matches.indexOf(document.querySelector("#currCocktail").value);
 	//Now scroll to next result
 	if (curr<matches.length-1){
 		curr++;
-		console.log(`Searching for: [${matches[curr]}]`);
+		// console.log(`Searching for: [${matches[curr]}]`);
 		show(matches[curr]);
 		document.querySelector("#currCocktail").value = matches[curr];
 		if (curr>0) document.querySelector("#prevBtn").disabled = false;
@@ -411,13 +411,13 @@ async function showPrev(){
 	//get all results
 	let matches = document.querySelector("#foundCocktails").value.split(",");
 	matches.pop();//last one is blank
-	console.log(document.querySelector("#foundCocktails").value);
+	// console.log(document.querySelector("#foundCocktails").value);
 	//get currently shown result
 	let curr = matches.indexOf(document.querySelector("#currCocktail").value);
 	//Now scroll to prev result
 	if (curr>0){
 		curr--;
-		console.log(`Searching for: [${matches[curr]}]`);
+		// console.log(`Searching for: [${matches[curr]}]`);
 		show(matches[curr]);
 		document.querySelector("#currCocktail").value = matches[curr];
 		if (curr>0) document.querySelector("#prevBtn").disabled = false;
@@ -436,8 +436,8 @@ function matchCocktails(cocktailArray){
 	let orderedDrinks = []
 	drinkIdArray = cocktailArray.map(ing=> ing.drinks.map(dr=> dr.idDrink))
 
-	console.log("ID's before:", drinkIdArray)
-
+	// console.log("ID's before:", drinkIdArray)
+	//Count any cocktails on multiple ingredient lists (arrays 0 to n-2)
 	for (let j=0;j<drinkIdArray.length-1;j++){
 		drinkIdArray[j].forEach(drinkId=>{
 			let DRK = {}
@@ -446,7 +446,16 @@ function matchCocktails(cocktailArray){
 			orderedDrinks.push(DRK);
 		})
 	}
+	//add on last array n-1
+	drinkIdArray[drinkIdArray.length-1].forEach(drinkId=> {
+		let DRK = {}
+		DRK["drinkId"] = drinkId
+		DRK["count"] = 1;
+		orderedDrinks.push(DRK);
+	})
+	//Sort drink list by number of ingredients matched
 	orderedDrinks.sort((a,b)=> b.count-a.count)
+
 	//console.log("ID's after:", drinkIdArray)
 	//console.log("Cocktail Array X", orderedDrinks)
 	//debugger;
@@ -466,15 +475,23 @@ function commonCocktail(originList, currentList, count, drinkId, drinkIdArray){
 	d = drinkIdArray[currentList].indexOf(drinkId)
 	if (currentList == drinkIdArray.length-1){
 		if (d > -1) { //then drinkId found on currentList, count it then delete it to prevent duplication
-			//drinkIdArray[currentList] = drinkIdArray[currentList].splice(d,1)
-			return 1 + count; //cocktail is in this number of ingredient tables
+			//console.log(`Deleting at End: ${d}`)
+			//console.log(JSON.stringify(drinkIdArray[currentList]))
+			drinkIdArray[currentList].splice(d,1)
+			//console.log(`Post delete:`)
+			//console.log(JSON.stringify(drinkIdArray[currentList]))
+			return (1 + count); //cocktail is in this number of ingredient tables
 		}
 		else {
 			return count;
 		}
-	}else {
+	}else { // there are other lists to be searched
 		if (d > -1) {//then drinkId found on currentList, count it then delete it to prevent duplication
-			//drinkIdArray[currentList] = drinkIdArray[currentList].splice(d,1)
+			// console.log(`Deleting Pre-End: ${d}`)
+			// console.log(JSON.stringify(drinkIdArray[currentList]))
+			drinkIdArray[currentList].splice(d,1)
+			// console.log(`Post delete:`)
+			// console.log(JSON.stringify(drinkIdArray[currentList]))
 			return commonCocktail(originList, currentList+1, count+1, drinkId, drinkIdArray); 
 		}
 		else {
@@ -489,7 +506,7 @@ async function show(drinkid) {
 		let res = await fetch(cocktailURL)//for this drink
 		.then(response => response.json())
 		.then(data => {
-			console.log(data);
+			// console.log(data);
 			document.querySelector(".result").classList.remove("invisible")
 			setTimeout(()=> document.querySelector("#searchError").innerText = "", 6000);
 			document.querySelector("img").src = data.drinks[0].strDrinkThumb;
